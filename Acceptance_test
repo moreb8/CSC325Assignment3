@@ -1,0 +1,75 @@
+from itertools import permutations
+
+import pytest
+
+from triangle import classify_triangle 
+
+
+def run(a, b, c):
+    """Call the function end-to-end and return its text, lowercased."""
+    return str(classify_triangle(a, b, c)).lower()
+
+
+def is_invalid_message(text):
+    return "not" in text or "invalid" in text
+
+
+SHAPES = [
+    ((5, 5, 5), "equilateral"),
+    ((5, 5, 8), "isosceles"),
+    ((7, 8, 9), "scalene"),
+    ((2.5, 2.5, 2.5), "equilateral"),
+    ((4.5, 4.5, 6.0), "isosceles"),
+]
+
+
+@pytest.mark.parametrize("sides,shape", SHAPES)
+def test_ac1_shape_correct_in_every_order(sides, shape):
+    for a, b, c in set(permutations(sides)):
+        result = run(a, b, c)
+        assert shape in result, f"{(a, b, c)} should be {shape}, got {result!r}"
+        assert not is_invalid_message(result), f"{(a, b, c)} wrongly rejected: {result!r}"
+        for other in {"equilateral", "isosceles", "scalene"} - {shape}:
+            assert other not in result, f"{(a, b, c)} wrongly labelled {other}: {result!r}"
+
+
+INVALID = [
+    (0, 0, 0),
+    (0, 4, 5),
+    (-3, 4, 5),
+    (3, -4, 5),
+    (1, 2, 3),       
+    (1, 1, 10),      
+    (10, 1, 1),
+    ("a", 4, 5),
+    (None, 4, 5),
+    ("", "", ""),
+]
+
+
+@pytest.mark.parametrize("sides", INVALID)
+def test_ac2_invalid_input_gives_message_not_crash(sides):
+    try:
+        result = run(*sides)
+    except Exception as exc:  
+        pytest.fail(f"{sides} crashed with {type(exc).__name__}: {exc}")
+    assert result.strip(), f"{sides} returned an empty message"
+    assert is_invalid_message(result), f"{sides} should say not valid, got {result!r}"
+    assert "right" not in result, f"{sides} must never be flagged right-angle: {result!r}"
+
+
+
+RIGHT = [(3, 4, 5), (5, 12, 13), (8, 15, 17), (6, 8, 10)]
+NOT_RIGHT = [(3, 4, 5.1), (2, 3, 4), (5, 5, 5), (5, 5, 8), (7, 8, 9), (1, 1, 1.5)]
+
+
+@pytest.mark.parametrize("sides", RIGHT)
+def test_ac3_right_triangles_are_flagged_in_every_order(sides):
+    for a, b, c in set(permutations(sides)):
+        assert "right" in run(a, b, c), f"{(a, b, c)} should be flagged right-angle"
+
+
+@pytest.mark.parametrize("sides", NOT_RIGHT)
+def test_ac3_non_right_triangles_are_not_flagged(sides):
+    for a, b, c in set(permutations(sides)):
+        assert "right" not in run(a, b, c), f"{(a, b, c)} wrongly flagged right-angle"
