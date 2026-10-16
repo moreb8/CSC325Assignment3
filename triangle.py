@@ -1,6 +1,9 @@
 import math
 
 def is_valid_triangle(a, b, c) -> bool:
+    for s in (a, b, c):
+        if isinstance(s, bool) or not isinstance(s, (int, float)) or not math.isfinite(s):
+            return False
     if a <= 0 or b <= 0 or c <= 0:
         return False
     return a + b > c and a + c > b and b + c > a
